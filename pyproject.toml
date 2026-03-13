@@ -34,7 +34,7 @@ dev = [
 # ================= RUFF =================
 [tool.ruff]
 line-length = 88
-target-version = "py313"
+target-version = "py312"
 src = ["src"]
 
 [tool.ruff.lint]
@@ -70,13 +70,16 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = false  #
-
+mypy_path = "src"
 # Игнорировать ошибки в миграциях и авто-генерированном коде
 exclude = ["alembic/versions/.*"]
 
 
 plugins = ["pydantic.mypy"]
-
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 # ================= PYTEST =================
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
