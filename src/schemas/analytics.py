@@ -18,5 +18,5 @@ class LinkStats(BaseModel):
     unique_ips: int = Field(..., ge=0)
     last_clecked_at: datetime | None = None
     clicks_by_country: dict[str, int] = Field(default_factory=dict)
-    clicks_by_devise: dict[str, int] = Field(default_factory=dict)
+    clicks_by_device: dict[str, int] = Field(default_factory=dict)
     clicks_last_7_days: dict[str, int] = Field(default_factory=dict)
