@@ -14,5 +14,8 @@ class Settings(BaseSettings):  # type: ignore[misc]
     LOG_LEVEL: str
     LOG_FILE: str | None = None
 
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ALGORITHM: str = "HS256"
+
 
 settings = Settings()
