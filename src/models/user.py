@@ -27,7 +27,7 @@ class User(Base):
         back_populates="owner",
         cascade="all, delete-orphan",
         lazy="selectin",
-        order_by="Link.created_at.desc()",
+        # order_by="Link.created_at.desc()",
     )
 
     def __repr__(self) -> str:

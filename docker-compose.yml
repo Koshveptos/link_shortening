@@ -24,7 +24,22 @@ services:
       start_period: 10s
     networks:
       - app-network
-
+  redis:  # ← Добавляем Redis
+    image: redis:7-alpine
+    container_name: shortener_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes  # Сохраняем данные на диск
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: shortener_pgadmin
@@ -51,5 +66,6 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:   
-  pgadmin_data:    
+  postgres_data:
+  pgadmin_data:
+  redis_data:

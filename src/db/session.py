@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.core.config import settings
+from src.core.logger import logger
 
 DATABASE_URL = settings.DATABASE_URL
 DEBUG = settings.DEBUG
@@ -15,9 +16,10 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         try:
             yield session
-            await session.commit()
-        except Exception:
+            # await session.commit() сделал коммит в севрвисах что б было логичнее
+        except Exception as e:
             await session.rollback()
+            logger.warning(f"DB error (rollback) {e}")
             raise
         finally:
             await session.close()

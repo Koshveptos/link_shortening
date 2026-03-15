@@ -8,13 +8,14 @@ dependencies = [
     "alembic>=1.18.4",
     "asyncpg>=0.31.0",
     "fastapi>=0.135.1",
-    "pydantic>=2.12.5",
+    "pydantic[email]>=2.12.5",
     "python-dotenv>=1.2.2",
     "pydantic-settings>=2.10.0",
     "uvicorn>=0.41.0",
     "passlib[bcrypt]>=1.7.4",
     "python-jose[cryptography]>=3.5.0",
     "bcrypt>=5.0.0",
+    "redis[hiredis]>=7.3.0",
 ]
 
 
@@ -22,15 +23,11 @@ dependencies = [
 dev = [
     "ruff>=0.4.4",
     "pre-commit>=4.5.1",
-
     "mypy>=1.10.0",
     "types-python-dateutil>=2.9.0",
-
-
-    "pytest>=9.0.2",
-    "pytest-asyncio>=0.24.0",
+    "pytest==8.3.5",
+    "pytest-asyncio==0.23.8",
     "httpx>=0.28.0",
-
     "pytest-cov>=6.0.0",
 ]
 
@@ -54,6 +51,7 @@ select = [
 ]
 ignore = [
     "E501",  # line-length
+    "B008"
 ]
 
 [tool.ruff.lint.isort]
@@ -62,7 +60,8 @@ known-first-party = ["src"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-
+[tool.ruff.lint.per-file-ignores]
+"src/endpoints/*.py" = ["B008"]
 # ================= MYPY =================
 [tool.mypy]
 python_version = "3.13"
@@ -86,7 +85,7 @@ warn_required_dynamic_aliases = true
 # ================= PYTEST =================
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
+#asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 python_files = ["test_*.py"]

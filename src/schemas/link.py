@@ -14,7 +14,7 @@ class LinkCreate(BaseModel):
         ..., max_length=2048, description="Ссылка должна начинаться с https://"
     )
     custom_alias: str | None = Field(
-        None, min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9\-_ ]+$"
+        None, min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9\-_]+$"
     )
     expires_at: datetime | None = Field(None, description="Время жизни ссылки")
 
@@ -43,7 +43,7 @@ class LinkUpdate(BaseModel):
     is_active: bool | None = None
     expires_at: datetime | None = None
     custom_alias: str | None = Field(
-        None, min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9\-_ ]+$"
+        None, min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9\-_]+$"
     )
 
 

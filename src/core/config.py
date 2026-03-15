@@ -16,6 +16,18 @@ class Settings(BaseSettings):  # type: ignore[misc]
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     ALGORITHM: str = "HS256"
+    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_CACHE_TTL_REDIRECT: int = 3600
+    REDIS_CACHE_TTL_STATS: int = 300
+
+    ###для разных коружений
+    @property
+    def database_url(self) -> str:
+        import os
+
+        if os.getenv("PYTEST_CURRENT_TEST") and self.TEST_DATABASE_URL:
+            return self.TEST_DATABASE_URL
+        return self.DATABASE_URL
 
 
 settings = Settings()
