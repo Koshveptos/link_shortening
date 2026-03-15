@@ -14,7 +14,7 @@ def get_password_hash(password: str) -> str:
     hashed = bcrypt.hashpw(password_bytes, salt)
     hashed_str = hashed.decode("utf-8")
     logger.debug(f"Password hashed: {hashed_str[:10]}...")
-    return cast(str, hashed_str.decode("utf-8"))
+    return cast(str, hashed_str)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
