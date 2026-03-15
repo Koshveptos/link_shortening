@@ -1,6 +1,32 @@
 version: '3.9'
 
 services:
+
+  app:
+    build: .
+    container_name: shortener_app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   postgres:
     image: postgres:16-alpine
     container_name: shortener_postgres
@@ -11,28 +37,28 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    networks:
+      - app-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
-    networks:
-      - app-network
-  redis:  # ← Добавляем Redis
+
+  redis:
     image: redis:7-alpine
     container_name: shortener_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes  # Сохраняем данные на диск
+    command: redis-server --appendonly yes
+    ports:
+      - "127.0.0.1:6380:6379"
     networks:
       - app-network
     healthcheck:
@@ -40,26 +66,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: shortener_pgadmin
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - app-network
 
 networks:
   app-network:
@@ -67,5 +73,4 @@ networks:
 
 volumes:
   postgres_data:
-  pgadmin_data:
   redis_data:
