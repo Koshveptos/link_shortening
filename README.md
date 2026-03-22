@@ -244,13 +244,102 @@ docker compose logs -f redis    # кэш
 
 
 ## 🧪 Тестирование
+Проект покрыт тестами: юнит-тесты, интеграционные и нагрузочные.  
+![img\locust.png](img\pocritie_unit_inter.png)
+
+Результаты нагрузочного тестирования
+![img\locust.png](img\locust.png)
+
+Подробные отчеты лежат в папках img и htmcov
+Выводу по тестированию - по нагрузочному сервер начал себя чувствовать при 1200 пользователях и rump up 20, что говорит либо об ограничениях тестирования на локальном устройстве, либо о недостаточной оптимизации бд (падал с 500 или 0 статусом)
+насчет юнит и интеграционного - покрытие 87%
 
 ### Юнит-тесты ()
 ```bash
+#  Запустить все юнит-тесты
 uv run pytest tests/unit/ -v
+
+# Запустить с покрытием
+uv run coverage run -m pytest tests/unit/
+uv run coverage report -m
+
+# Сгенерировать HTML-отчёт
+uv run coverage html
+Start-Process htmlcov/index.html
+```
+### Интеграционные тесты и нагрузочные
+
+Проверяют API-эндпоинты через AsyncClient с реальной PostgreSQL базой.
+
+**Подготовка:**
+
+```bash
+#для начала создай
+# .env.loadtest — для нагрузочных тестов 
+
+
+SECRET_KEY=test-secret-key-for-load-testing-only-min-32-chars-here
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+ALGORITHM=HS256
+
+
+POSTGRES_USER=shortener_admin
+POSTGRES_PASSWORD=admin
+POSTGRES_DB=shortener_load_test
+POSTGRES_PORT=5434           
+
+
+DATABASE_URL=postgresql+asyncpg://shortener_admin:admin@postgres:5432/shortener_load_test
+REDIS_URL=redis://redis:6379/1 
+
+
+APP_NAME=LinkShortener-LoadTest
+DEBUG=True
+LOG_LEVEL=WARNING
+
 ```
 
 
+
+
+```bash
+# 1. Запусти тестовый стек Docker (если ещё не запущен)
+docker compose -f docker-compose.loadtest.yml up -d
+
+# 2. Создай тестовую БД (один раз)
+docker compose -f docker-compose.loadtest.yml exec postgres psql -U shortener_admin -d postgres -c "CREATE DATABASE shortener_load_test;"
+
+# 3. Примени миграции
+docker compose -f docker-compose.loadtest.yml exec app alembic upgrade head
+
+# 4. Проверь, что app работает
+curl http://127.0.0.1:8001/health
+
+#  Запустить все интеграционные тесты
+uv run pytest tests/integration_test/ -v
+
+
+#  Запустить с покрытием
+uv run coverage run -m pytest tests/integration_test/
+uv run coverage report -m
+
+# 5. Запусти Locust 
+uv run locust -f tests/load/locustfile.py --host http://127.0.0.1:8001
+
+# 6. Очисти после тестов
+docker compose -f docker-compose.loadtest.yml down -v
+
+
+###если падает с проблемой нет бд *500 то проверь Таблицы
+# Проверь, что БД существует:
+docker compose -f docker-compose.loadtest.yml exec postgres psql -U shortener_admin -d postgres -c "\l"
+
+# Если нет shortener_load_test — создай:
+docker compose -f docker-compose.loadtest.yml exec postgres psql -U shortener_admin -d postgres -c "CREATE DATABASE shortener_load_test;"
+
+# Примени миграции:
+docker compose -f docker-compose.loadtest.yml exec app alembic upgrade head
+```
 
 ---
 
