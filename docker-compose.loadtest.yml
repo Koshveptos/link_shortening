@@ -1,0 +1,81 @@
+# docker-compose.loadtest.yml
+version: '3.9'
+
+services:
+  # 🔹 Приложение (тестовое)
+  app:
+    build: .
+    container_name: shortener_app_loadtest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8000"  # ← Другой порт! (продакшн на 8000)
+    env_file:
+      - .env.loadtest
+    environment:
+      # Внутри Docker-сети имена сервисов: postgres, redis
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 🔹 PostgreSQL (тестовый)
+  postgres:
+    image: postgres:16-alpine
+    container_name: shortener_postgres_loadtest
+    restart: unless-stopped
+    env_file:
+      - .env.loadtest
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}  # ← shortener_load_test
+    volumes:
+      - postgres_loadtest_data:/var/lib/postgresql/data  # ← ✅ Двоеточие после имени!
+    ports:
+      - "127.0.0.1:5434:5432"  # ← Другой порт (продакшн на 5433)
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # 🔹 Redis (тестовый)
+  redis:
+    image: redis:7-alpine
+    container_name: shortener_redis_loadtest
+    restart: unless-stopped
+    volumes:
+      - redis_loadtest_data:/data  # ← ✅ Двоеточие после имени!
+    command: redis-server --appendonly yes
+    ports:
+      - "127.0.0.1:6381:6379"  # ← Другой порт (продакшн на 6380)
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+networks:
+  app-network:
+    driver: bridge
+
+# ✅ volumes — ОБЯЗАТЕЛЬНО с двоеточиями после каждого имени!
+volumes:
+  postgres_loadtest_data:  # ← ✅ Двоеточие!
+  redis_loadtest_data:     # ← ✅ Двоеточие!

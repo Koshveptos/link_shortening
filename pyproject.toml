@@ -16,6 +16,8 @@ dependencies = [
     "python-jose[cryptography]>=3.5.0",
     "bcrypt>=5.0.0",
     "redis[hiredis]>=7.3.0",
+    "aiosqlite>=0.22.1",
+    "locust>=2.43.3",
 ]
 
 
@@ -91,3 +93,7 @@ pythonpath = ["src", "."]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pytest_asyncio",
+    "ignore::DeprecationWarning:starlette",
+]
